@@ -1,0 +1,38 @@
+# Secrets — NEVER copy .env into the image
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Development / testing
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+tests/
+
+# Version control
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# SQLite database — mounted as a volume at runtime
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Docs
+*.md
+constitution/

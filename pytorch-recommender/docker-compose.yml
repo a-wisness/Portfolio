@@ -1,0 +1,52 @@
+# One-command startup:  docker compose up --build
+# Then open http://localhost:8080
+#
+# The backend serves a baked-in trained checkpoint immediately.
+#
+# Train-then-serve in one command (trains a fresh version into the shared
+# artifacts volume, then brings up the stack serving it):
+#   docker compose --profile train up --build trainer    # runs training to completion
+#   docker compose up --build                             # serve (loads the new version)
+#
+# Or retrain against a running stack:
+#   docker compose run --rm trainer
+#   docker compose restart backend
+
+services:
+  # One-shot training job. Shares the backend image + volumes; writes a new
+  # versioned artifact into the `artifacts` volume, then exits. Only runs when
+  # the "train" profile is selected, so a plain `up` never triggers it.
+  trainer:
+    build: ./backend
+    profiles: ["train"]
+    entrypoint: []                       # bypass the serving entrypoint
+    command: ["python", "-m", "app.train"]
+    volumes:
+      - artifacts:/app/artifacts
+      - mldata:/app/data
+
+  backend:
+    build: ./backend
+    volumes:
+      - artifacts:/app/artifacts   # trained model; seeded from the image on first run
+      - mldata:/app/data           # MovieLens download cache (used when retraining)
+    ports:
+      - "8000:8000"                # API + docs at /docs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  artifacts:
+  mldata:

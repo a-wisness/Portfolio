@@ -1,0 +1,36 @@
+# One-command startup:  docker compose up --build
+# Then open http://localhost:8080
+#
+# The frontend (nginx) serves the UI and proxies /api to the backend, so the
+# whole app is reachable from a single origin on port 8080.
+
+services:
+  backend:
+    build: ./backend
+    # ANTHROPIC_API_KEY is read from the project-root .env (copy .env.example).
+    # pydantic-settings maps the ANTHROPIC_API_KEY env var to settings automatically.
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - chroma-data:/app/data        # persist the vector index across restarts
+      - model-cache:/root/.cache     # persist the downloaded embedding model
+    ports:
+      - "8000:8000"                  # exposed for direct API access / docs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  chroma-data:
+  model-cache:

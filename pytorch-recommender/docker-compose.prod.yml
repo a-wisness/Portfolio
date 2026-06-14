@@ -1,0 +1,55 @@
+# Production compose (single host). Standalone — use INSTEAD of docker-compose.yml:
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Differences from the dev compose:
+#   * only the frontend is published (port 80); the backend is reachable only on
+#     the internal network, via the nginx /api proxy — no public 8000.
+#   * restart policies + healthchecks + modest resource limits.
+#   * no `trainer` profile and no source bind mounts.
+#
+# See DEPLOY.md for the full guide (TLS, model updates, scaling, limitations).
+
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    expose:
+      - "8000"                         # internal only — not published to the host
+    volumes:
+      - artifacts:/app/artifacts       # served model registry (seeded from the image)
+      - mldata:/app/data               # MovieLens cache (only used when retraining)
+    environment:
+      # Serving knobs (all optional; defaults shown). See app/config.py.
+      - USE_FAISS=${USE_FAISS:-false}
+      - GENRE_WEIGHT=${GENRE_WEIGHT:-0.2}
+      - CACHE_SIZE=${CACHE_SIZE:-512}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2g
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"                         # public entrypoint (put TLS in front — see DEPLOY.md)
+    depends_on:
+      backend:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256m
+
+volumes:
+  artifacts:
+  mldata:

@@ -1,0 +1,9 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+data/
+tests/
+.pytest_cache/
+# Note: artifacts/ is intentionally NOT ignored — the committed checkpoint is
+# baked into the image as a seed.

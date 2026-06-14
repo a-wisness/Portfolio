@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Data (downloaded MovieLens) — not committed
+backend/data/
+
+# Model artifacts: ignore everything EXCEPT the committed versioned registry
+# (the active-version pointer + the versions/ snapshots and their sidecars).
+backend/artifacts/*
+!backend/artifacts/.gitkeep
+!backend/artifacts/active.txt
+!backend/artifacts/versions/
+!backend/artifacts/versions/**
+
+# Node / frontend
+node_modules/
+dist/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store

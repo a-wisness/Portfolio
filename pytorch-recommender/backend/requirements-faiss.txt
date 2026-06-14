@@ -1,0 +1,5 @@
+# OPTIONAL: enables the FAISS ANN backend for embedding retrieval at scale.
+# Not required — the recommender falls back to an exact brute-force cosine scan
+# when FAISS isn't installed. Install only if you set USE_FAISS=true:
+#   pip install -r requirements-faiss.txt
+faiss-cpu>=1.8
