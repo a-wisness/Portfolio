@@ -1,0 +1,40 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      # Data is mounted read-only from the original project (see volumes).
+      LEAFLENS_CLASSIFICATION_DIR: /data/Classification Data
+      LEAFLENS_SEGMENTATION_DIR: /data/Image Segmentation Data
+      LEAFLENS_ARTIFACTS_DIR: /app/artifacts
+    volumes:
+      - artifacts:/app/artifacts
+      - ../LeafDiseaseDetection-DL:/data:ro
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  # One-shot trainer: `docker compose run --rm trainer` writes the artifact
+  # into the shared volume, then `backend` serves it.
+  trainer:
+    build: ./backend
+    command: python -m app.train
+    environment:
+      LEAFLENS_CLASSIFICATION_DIR: /data/Classification Data
+      LEAFLENS_SEGMENTATION_DIR: /data/Image Segmentation Data
+      LEAFLENS_ARTIFACTS_DIR: /app/artifacts
+    volumes:
+      - artifacts:/app/artifacts
+      - ../LeafDiseaseDetection-DL:/data:ro
+    profiles:
+      - train
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  artifacts:

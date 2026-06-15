@@ -1,0 +1,73 @@
+# Standalone production manifest (not an overlay — avoids Compose list-merge
+# surprises). Train once, then serve:
+#
+#   docker compose -f docker-compose.prod.yml --profile train run --rm trainer
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Versus the dev compose: the backend is internal-only (no published port),
+# the frontend is the single public entrypoint on :80 (front it with a TLS
+# terminator), both restart automatically, both have healthchecks, and the data
+# mount is read-only. See DEPLOY.md.
+services:
+  backend:
+    build: ./backend
+    environment:
+      LEAFLENS_CLASSIFICATION_DIR: /data/Classification Data
+      LEAFLENS_SEGMENTATION_DIR: /data/Image Segmentation Data
+      LEAFLENS_ARTIFACTS_DIR: /app/artifacts
+    volumes:
+      - artifacts:/app/artifacts
+      - ../LeafDiseaseDetection-DL:/data:ro
+    expose:
+      - "8000"                 # internal only; reached via the nginx /api proxy
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/health', timeout=4).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 4g
+        reservations:
+          memory: 1g
+
+  # One-shot trainer (profile: train). Writes a new active version into the
+  # shared artifacts volume; supports no-downtime updates (see DEPLOY.md).
+  trainer:
+    build: ./backend
+    command: python -m app.train
+    environment:
+      LEAFLENS_CLASSIFICATION_DIR: /data/Classification Data
+      LEAFLENS_SEGMENTATION_DIR: /data/Image Segmentation Data
+      LEAFLENS_ARTIFACTS_DIR: /app/artifacts
+    volumes:
+      - artifacts:/app/artifacts
+      - ../LeafDiseaseDetection-DL:/data:ro
+    profiles:
+      - train
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"                # public entrypoint; terminate TLS in front of it
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256m
+
+volumes:
+  artifacts:
