@@ -27,5 +27,10 @@ class Settings(BaseSettings):
     # Generation
     max_answer_tokens: int = 1500
 
+    # Pricing (USD per million tokens) for the configured Claude model, used to
+    # estimate per-query cost. Defaults match claude-opus-4-8: $5 in / $25 out.
+    input_price_per_mtok: float = 5.0
+    output_price_per_mtok: float = 25.0
+
 
 settings = Settings()

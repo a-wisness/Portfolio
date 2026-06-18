@@ -277,6 +277,29 @@ body {
   padding: 0 1px;
 }
 
+/* Performance metrics footer */
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.metrics__sep {
+  color: var(--border);
+}
+
+.metrics__item--total {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .sources {
   display: flex;
   flex-direction: column;

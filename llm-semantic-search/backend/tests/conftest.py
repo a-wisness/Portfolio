@@ -51,9 +51,13 @@ def fake_models(monkeypatch):
         embeddings, "embed_query", lambda q: _fake_vector(q)
     )
 
-    def fake_synthesize(query: str, passages: list[dict]) -> str:
+    def fake_synthesize(query: str, passages: list[dict]) -> tuple[str, dict]:
+        usage = {"input_tokens": 42, "output_tokens": 7}
         if not passages:
-            return "The documents don't appear to cover this."
-        return f"Synthesized answer for {query!r} grounded in [1]."
+            return "The documents don't appear to cover this.", {
+                "input_tokens": 0,
+                "output_tokens": 0,
+            }
+        return f"Synthesized answer for {query!r} grounded in [1].", usage
 
     monkeypatch.setattr(llm, "synthesize_answer", fake_synthesize)

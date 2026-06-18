@@ -45,10 +45,17 @@ def _format_context(passages: list[dict]) -> str:
     return "\n\n".join(blocks)
 
 
-def synthesize_answer(query: str, passages: list[dict]) -> str:
-    """Call Claude to produce a cited answer from the retrieved passages."""
+def synthesize_answer(query: str, passages: list[dict]) -> tuple[str, dict]:
+    """Call Claude to produce a cited answer from the retrieved passages.
+
+    Returns the answer text plus a token-usage dict (``input_tokens`` /
+    ``output_tokens``) so callers can surface cost and performance metrics.
+    """
     if not passages:
-        return "I couldn't find anything relevant in the indexed documents."
+        return (
+            "I couldn't find anything relevant in the indexed documents.",
+            {"input_tokens": 0, "output_tokens": 0},
+        )
 
     user_prompt = (
         f"Question: {query}\n\n"
@@ -66,4 +73,8 @@ def synthesize_answer(query: str, passages: list[dict]) -> str:
     )
 
     parts = [block.text for block in response.content if block.type == "text"]
-    return "\n".join(parts).strip()
+    usage = {
+        "input_tokens": response.usage.input_tokens,
+        "output_tokens": response.usage.output_tokens,
+    }
+    return "\n".join(parts).strip(), usage

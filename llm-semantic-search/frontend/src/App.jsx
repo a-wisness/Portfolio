@@ -104,7 +104,7 @@ export default function App() {
 
           {result && !searching && (
             <div className="results">
-              <AnswerCard answer={result.answer} />
+              <AnswerCard answer={result.answer} metrics={result.metrics} />
               <ResultList sources={result.sources} />
             </div>
           )}

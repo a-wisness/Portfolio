@@ -57,6 +57,24 @@ def test_full_search_flow():
     assert {"index", "filename", "chunk_index", "text", "score"} <= src.keys()
     assert src["index"] == 1
 
+    metrics = body["metrics"]
+    assert {
+        "embed_ms",
+        "retrieve_ms",
+        "synthesize_ms",
+        "total_ms",
+        "input_tokens",
+        "output_tokens",
+        "estimated_cost_usd",
+        "top_score",
+    } <= metrics.keys()
+    # Stage timings sum to roughly the reported total, and token usage flows
+    # through from the (stubbed) synthesis call into the cost estimate.
+    assert metrics["total_ms"] >= 0
+    assert metrics["input_tokens"] == 42
+    assert metrics["output_tokens"] == 7
+    assert metrics["estimated_cost_usd"] > 0
+
 
 def test_search_validates_empty_query():
     client.post("/api/ingest", files={"file": ("d.txt", b"some content here", "text/plain")})

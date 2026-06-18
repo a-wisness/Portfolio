@@ -117,6 +117,34 @@ Open <http://localhost:5173>, drop in a document, and ask a question.
 | POST   | `/api/reset`  | Clear the index                              |
 | GET    | `/api/health` | Liveness probe                               |
 
+## Performance metrics
+
+Every `/api/search` response carries a `metrics` object so the system's speed
+and cost are visible, not implicit. The pipeline times each stage and captures
+Claude's token usage:
+
+```jsonc
+"metrics": {
+  "embed_ms": 8.4,         // local query embedding
+  "retrieve_ms": 12.1,     // ChromaDB cosine search
+  "synthesize_ms": 2140.7, // Claude answer synthesis (dominates)
+  "total_ms": 2161.2,
+  "input_tokens": 1240,
+  "output_tokens": 180,
+  "estimated_cost_usd": 0.0107,
+  "top_score": 0.83        // similarity of the best-matching passage
+}
+```
+
+The UI renders this as a footer under each answer. It makes the cost/latency
+profile of RAG concrete: **the Claude call dominates** end-to-end time, while
+local embedding and vector retrieval are sub-second and free.
+
+Cost is estimated from per-million-token prices in
+[`backend/app/config.py`](./backend/app/config.py) (`input_price_per_mtok` /
+`output_price_per_mtok`, defaulting to `claude-opus-4-8` at \$5 in / \$25 out) —
+update them if you switch models.
+
 ## Testing
 
 Two layers of verification: a fast offline **unit/integration suite** and a

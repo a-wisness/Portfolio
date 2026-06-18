@@ -60,6 +60,28 @@ cited answer with visible sources — no config beyond the API key.
 - Deploy: static frontend + containerized backend with a persistent volume.
 - Observability: request logging, latency and token-usage metrics.
 
+## Phase 5 — Performance metrics & observability
+
+Make the system's speed and cost legible instead of implicit.
+
+- **Per-query performance instrumentation ✅** — `answer_query` times each
+  pipeline stage (embed / retrieve / synthesize) and captures Claude token
+  usage, returning them on the search response as a `metrics` object. The UI
+  renders a footer under each answer: stage latency, total time, input/output
+  tokens, and an estimated per-query cost (derived from configurable
+  per-million-token prices in `config.py`). This surfaces where latency and
+  cost actually live — the Claude call dominates; local embedding and vector
+  retrieval are sub-second.
+- **Aggregate metrics:** rolling p50/p95 latency and token/cost totals across
+  queries, exposed via a `/api/metrics` endpoint and a small dashboard.
+- **Structured request logging:** one log line per search with timings, token
+  counts, and `top_k`, suitable for shipping to a log aggregator.
+- **Accuracy evaluation harness:** an offline `eval/` suite over a small gold
+  Q/A set measuring retrieval quality (recall@k, MRR, nDCG), citation validity,
+  and Claude-judged answer groundedness — the quantitative complement to these
+  performance metrics, and the way to prove Phase 2's hybrid retrieval and
+  reranking actually help.
+
 ## Tracking
 
 Phase 1 items are the definition of done for the first release. Anything in
