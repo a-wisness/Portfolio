@@ -110,6 +110,14 @@ npm install
 npm run dev                      # http://localhost:5173
 ```
 
+## Train on Colab, infer locally
+
+No GPU? Train on a free Colab GPU and drop the result into a local install for
+serving — training and serving are decoupled by the model registry, so a run
+produces a self-contained version folder you just copy in and activate. See
+[`docs/COLAB.md`](docs/COLAB.md) and the ready-to-run
+[`notebooks/train_colab.ipynb`](notebooks/train_colab.ipynb).
+
 ## API
 
 | Method | Path            | Description |
