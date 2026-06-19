@@ -28,8 +28,8 @@ It ships as a Python training package, a FastAPI inference service, and a React 
 **Why this architecture?** The original project (`LeafDiseaseDetection-DL`, a senior Bachelor's project) used two completely separate models: a U-Net for segmentation and a MobileNetV2 classifier for disease. They shared nothing — not weights, not a pipeline, not an inference path. That is wasteful (two full backbones to train and serve) and misses an obvious synergy: knowing *where the leaf is* should help *diagnose it*. The multitask redesign trains a single shared backbone on both signals, reducing inference cost and encoding richer visual features from both tasks simultaneously.
 
 **Results** (trained on deliberately disjoint datasets — segmentation images had no class labels; classification images had no masks):
-- Segmentation: IoU **0.58**, Dice **0.66** over 705 validation images
-- Classification: **37%** accuracy over 236 held-out test images across 28 classes
+- Segmentation: IoU **0.79**, Dice **0.86** over 705 validation images
+- Classification: **57%** accuracy over 236 held-out test images across 28 classes
 
 ### Tech Stack
 - ML/training — Python 3.11+ · TensorFlow/Keras · numpy · scikit-learn · Pydantic
